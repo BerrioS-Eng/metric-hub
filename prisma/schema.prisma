@@ -14,8 +14,8 @@ datasource db {
 }
 
 enum Enum_Role {
-  user
-  administrator
+  USER
+  ADMIN
 }
 
 model User {
@@ -23,7 +23,7 @@ model User {
   name          String
   email         String        @unique
   phone         String?
-  role          Enum_Role
+  role          Enum_Role     @default(ADMIN)
   transaction   Transaction[]
   emailVerified Boolean       @default(false)
   image         String?
