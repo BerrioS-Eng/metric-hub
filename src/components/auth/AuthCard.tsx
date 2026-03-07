@@ -35,7 +35,6 @@ export function AuthCard({ onTransition }: AuthCardProps) {
                 email: formData.get("email") as string,
                 password: formData.get("password") as string,
             });
-            console.log(res);
             if (res.error) {
                 setError(res.error.message || "Credenciales incorrectas.");
                 return;
@@ -48,7 +47,6 @@ export function AuthCard({ onTransition }: AuthCardProps) {
                 password: formData.get("password") as string,
                 phone: formData.get("phone") as string,
             });
-            console.log(res);
             if (res.error) {
                 setError(res.error.message || "Error al registrarse.");
                 return;
