@@ -6,12 +6,15 @@ import { auth } from "@/lib/auth";
 export async function GET() {
     const session = await auth.api.getSession({ headers: await headers() });
 
-    if (!session) {
+    if (!session?.user) {
         return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
+    const isAdmin = session.user.role === "ADMIN";
+
     try {
         const transactions = await prisma.transaction.findMany({
+            where: isAdmin ? {} : { userId: session.user.id },
             select: {
                 id: true,
                 concept: true,
@@ -31,13 +34,8 @@ export async function GET() {
             transactions.map(t => ({
                 ...t,
                 amount: Number(t.amount),
-                date: t.date.toLocaleDateString("es-ES", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                })
-            })),
-            { status: 200 }
+                date: t.date.toISOString(),
+            }))
         );
     } catch (error) {
         console.error("Error fetching transactions:", error);
@@ -48,28 +46,38 @@ export async function GET() {
 export async function POST(request: Request) {
     const session = await auth.api.getSession({ headers: await headers() });
 
-    if (!session) {
+    if (!session?.user) {
         return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     try {
         const { concept, amount, date, type } = await request.json();
 
+        if (!concept || !amount || !date || !type) {
+            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        }
+
+        if (!["income", "expense"].includes(type)) {
+            return NextResponse.json({ error: "Invalid transaction type" }, { status: 400 });
+        }
+
+        if (Number(amount) <= 0) {
+            return NextResponse.json({ error: "Amount must be greater than 0" }, { status: 400 });
+        }
+
         const transactionDate = new Date(date);
-        const today = new Date();
-        if (transactionDate > today) {
+        if (isNaN(transactionDate.getTime())) {
+            return NextResponse.json({ error: "Invalid date" }, { status: 400 });
+        }
+
+        if (transactionDate > new Date()) {
             return NextResponse.json({ error: "Date cannot be in the future" }, { status: 400 });
         }
 
         const newTransaction = await prisma.transaction.create({
-            data: {
-                concept,
-                amount,
-                date: new Date(date),
-                type,
-                userId: session.user.id,
-            },
+            data: { concept, amount, date: transactionDate, type, userId: session.user.id },
         });
+
         return NextResponse.json(newTransaction, { status: 201 });
     } catch (error) {
         console.error("Error creating transaction:", error);

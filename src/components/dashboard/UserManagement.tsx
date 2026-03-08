@@ -83,7 +83,7 @@ export default function UserManagement() {
             <CardHeader>
                 <CardTitle>User Management</CardTitle>
                 <CardDescription>
-                    Manage user information and roles (Administrators Only)
+                    Manage user information and roles
                 </CardDescription>
             </CardHeader>
             <CardContent>
