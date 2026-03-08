@@ -6,6 +6,7 @@ import { LuLayoutDashboard, LuUsersRound } from "react-icons/lu";
 import { FaChartBar } from "react-icons/fa";
 import { useState } from "react";
 import { useSession } from "@/lib/auth-client";
+import UserManagement from "@/components/dashboard/UserManagement";
 
 export default function dashboard() {
   const [activeTab, setActiveTab] = useState("income-expense");
@@ -46,11 +47,11 @@ export default function dashboard() {
               </TabsList>
 
               <TabsContent value="income-expense" className="mt-6">
-                <p>Income and Expense Management Content</p>
+                
               </TabsContent>
 
               <TabsContent value="users" className="mt-6">
-                <p>User Management Content</p>
+                <UserManagement />
               </TabsContent>
 
               <TabsContent value="reports" className="mt-6">
