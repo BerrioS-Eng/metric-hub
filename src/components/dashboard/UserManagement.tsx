@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { LuPencilLine } from "react-icons/lu";
 import { Spinner } from "@/components/ui/spinner";
+import { useSession } from "@/lib/auth-client";
 
 
 export default function UserManagement() {
@@ -22,13 +23,13 @@ export default function UserManagement() {
         role: "ADMIN" as "ADMIN" | "USER",
         //Añadir campo phone en caso de que no tenga valor registrado
     });
+    const { data: session, refetch } = useSession(); 
 
     useEffect(() => {
         fetch("/api/users")
             .then((res) => res.json())
             .then((data) => {
                 setUsers(data);
-                setLoading(false);
             })
             .catch((error) => {
                 console.error("Error fetching users:", error);
@@ -68,8 +69,9 @@ export default function UserManagement() {
                 setUsers((prevUsers) =>
                     prevUsers.map((user) => (user.id === id ? updatedUser : user))
                 );
-            } else {
-                console.error("Failed to update user");
+                if (id === session?.user.id) {
+                    await refetch();
+                }
             }
         } catch (error) {
             console.error("Error updating user:", error);

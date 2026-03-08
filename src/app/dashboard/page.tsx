@@ -4,15 +4,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LuLayoutDashboard, LuUsersRound } from "react-icons/lu";
 import { FaChartBar } from "react-icons/fa";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "@/lib/auth-client";
 import UserManagement from "@/components/dashboard/UserManagement";
+import IncomeExpenseManagement from "@/components/dashboard/IncomeExpenseManagement";
 
-export default function dashboard() {
+export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("income-expense");
   const { data: session } = useSession();
   const user = session?.user;
   const isAdmin = user?.role === "ADMIN";
+
+  useEffect(() => {
+    if (!isAdmin && (activeTab === "users" || activeTab === "reports")) {
+      setActiveTab("income-expense");
+    }
+  }, [session]);
+
   return (
     <main className="container mx-auto px-4 py-8">
       <motion.div
@@ -24,7 +32,7 @@ export default function dashboard() {
           <CardHeader>
             <CardTitle>Main Menu</CardTitle>
             <CardDescription>
-              Navigate between different sections of the system
+              Navigate between different sections of the dashboard
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -37,17 +45,17 @@ export default function dashboard() {
                 <TabsTrigger value="users" disabled={!isAdmin}>
                   <LuUsersRound className="h-4 w-4 mr-2" />
                   User Management
-                  {!user && " (Admin Only)"}
+                  {!isAdmin && " (Admin Only)"}
                 </TabsTrigger>
                 <TabsTrigger value="reports" disabled={!isAdmin}>
                   <FaChartBar className="h-4 w-4 mr-2" />
                   Reports
-                  {!user && " (Admin Only)"}
+                  {!isAdmin && " (Admin Only)"}
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="income-expense" className="mt-6">
-                
+                <IncomeExpenseManagement />
               </TabsContent>
 
               <TabsContent value="users" className="mt-6">

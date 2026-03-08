@@ -22,8 +22,8 @@ export default function DashboardLayout({
         }
     }, [isPending, session, router]);
 
-    if (isPending) return <p className="text-center mt-8 text-white">Loading...</p>;
-    if (!session?.user) return <p className="text-center mt-8 text-white">Redirecting...</p>;
+    if (isPending) return <p className="text-center mt-8 text-black">Loading...</p>;
+    if (!session?.user) return <p className="text-center mt-8 text-black">Redirecting...</p>;
 
     const { user } = session;
     console.log("User session:", user);
@@ -60,7 +60,7 @@ export default function DashboardLayout({
                             <div className="flex items-center gap-4">
                                 <div className="text-right">
                                     <p className="text-sm font-medium">{user.name}</p>
-                                    <Badge variant={user ? "default" : "secondary"}>
+                                    <Badge variant={user.role === "ADMIN" ? "default" : "secondary"}>
                                         {user.role}
                                     </Badge>
                                 </div>
