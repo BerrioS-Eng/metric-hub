@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { hasPermission, Role } from "@/lib/rbac";
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
@@ -12,6 +13,10 @@ export async function GET(req: Request) {
 
     if (!session?.user) {
         return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!hasPermission(session.user.role as Role, "/api/reports")) {
+        return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
     const isAdmin = session.user.role === "ADMIN";

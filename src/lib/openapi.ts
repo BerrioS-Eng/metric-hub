@@ -500,9 +500,7 @@ export const openApiSpec = {
                 tags: ["Reports"],
                 summary: "Get financial report",
                 description:
-                    "Returns aggregated financial data for the specified time window.\n\n" +
-                    "- **ADMIN** — aggregates across all users\n" +
-                    "- **USER** — aggregates for own transactions only\n\n" +
+                    "Returns aggregated financial data for the specified time window. **Requires ADMIN role.**\n\n" +
                     "The `days` parameter defaults to **30** and is capped at **365**.",
                 operationId: "getReport",
                 security: [{ cookieAuth: [] }],
@@ -555,6 +553,15 @@ export const openApiSpec = {
                             "application/json": {
                                 schema: { $ref: "#/components/schemas/Error" },
                                 example: { message: "Unauthorized" },
+                            },
+                        },
+                    },
+                    "403": {
+                        description: "Authenticated but not an ADMIN",
+                        content: {
+                            "application/json": {
+                                schema: { $ref: "#/components/schemas/Error" },
+                                example: { message: "Forbidden" },
                             },
                         },
                     },

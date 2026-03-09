@@ -11,7 +11,8 @@ Routes and which roles can access them
 export const ROUTES_PERMISSIONS: Record<string, Role[]> = {
     "/dashboard": ["ADMIN", "USER"],
     "/api/users/": ["ADMIN"],
-    "api/transactions/": ["ADMIN", "USER"]
+    "/api/reports": ["ADMIN"],
+    "/api/transactions/": ["ADMIN", "USER"],
 };
 
 export function hasPermission(role: Role, path: string): boolean {
