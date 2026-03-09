@@ -2,7 +2,51 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { NewTransactionSchema } from "@/lib/schemas";
 
+/**
+ * @openapi
+ * /api/transactions:
+ *   get:
+ *     tags: [Transactions]
+ *     summary: List transactions
+ *     description: >
+ *       Returns transactions ordered by date descending.
+ *       ADMINs see all users' transactions; USERs see only their own.
+ *     operationId: listTransactions
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - name: days
+ *         in: query
+ *         required: false
+ *         description: Filter to transactions in the last N days. Omit to return all.
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           example: 30
+ *     responses:
+ *       200:
+ *         description: Array of transactions.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Transaction'
+ *       401:
+ *         description: Not authenticated.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/FieldError'
+ */
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const daysParam = searchParams.get("days");
@@ -14,14 +58,17 @@ export async function GET(req: Request) {
 
     const isAdmin = session.user.role === "ADMIN";
 
+    // Build an optional date filter: transactions on or after N days ago.
     const dateFilter = daysParam
         ? { gte: new Date(Date.now() - Number(daysParam) * 86400_000) }
         : undefined;
 
+    // ADMINs query all transactions (optionally filtered by date).
+    // USERs are always scoped to their own userId.
     const where = isAdmin
         ? (dateFilter ? { date: dateFilter } : {})
         : { userId: session.user.id, ...(dateFilter ? { date: dateFilter } : {}) };
-    
+
     try {
         const transactions = await prisma.transaction.findMany({
             where,
@@ -43,6 +90,7 @@ export async function GET(req: Request) {
         return NextResponse.json(
             transactions.map(t => ({
                 ...t,
+                // Prisma returns Decimal objects; convert to number for JSON serialization.
                 amount: Number(t.amount),
                 date: t.date.toISOString(),
             }))
@@ -53,6 +101,59 @@ export async function GET(req: Request) {
     }
 }
 
+/**
+ * @openapi
+ * /api/transactions:
+ *   post:
+ *     tags: [Transactions]
+ *     summary: Create a transaction
+ *     description: Records a new income or expense transaction for the authenticated user.
+ *     operationId: createTransaction
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/NewTransaction'
+ *           example:
+ *             concept: Grocery shopping
+ *             amount: 85.50
+ *             date: "2026-03-05"
+ *             type: expense
+ *     responses:
+ *       201:
+ *         description: Transaction created successfully.
+ *       400:
+ *         description: Validation error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/FieldError'
+ *             examples:
+ *               missingFields:
+ *                 summary: Missing required fields
+ *                 value: { error: Missing required fields }
+ *               invalidType:
+ *                 summary: Invalid transaction type
+ *                 value: { error: Invalid input }
+ *               futureDate:
+ *                 summary: Date in the future
+ *                 value: { error: Date cannot be in the future }
+ *       401:
+ *         description: Not authenticated.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/FieldError'
+ */
 export async function POST(request: Request) {
     const session = await auth.api.getSession({ headers: await headers() });
 
@@ -61,28 +162,17 @@ export async function POST(request: Request) {
     }
 
     try {
-        const { concept, amount, date, type } = await request.json();
+        const body = await request.json();
 
-        if (!concept || !amount || !date || !type) {
-            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        // Validate and parse the request body with Zod.
+        const result = NewTransactionSchema.safeParse(body);
+        if (!result.success) {
+            const message = result.error.issues[0]?.message ?? "Invalid input";
+            return NextResponse.json({ error: message }, { status: 400 });
         }
 
-        if (!["income", "expense"].includes(type)) {
-            return NextResponse.json({ error: "Invalid transaction type" }, { status: 400 });
-        }
-
-        if (Number(amount) <= 0) {
-            return NextResponse.json({ error: "Amount must be greater than 0" }, { status: 400 });
-        }
-
+        const { concept, amount, date, type } = result.data;
         const transactionDate = new Date(date);
-        if (isNaN(transactionDate.getTime())) {
-            return NextResponse.json({ error: "Invalid date" }, { status: 400 });
-        }
-
-        if (transactionDate > new Date()) {
-            return NextResponse.json({ error: "Date cannot be in the future" }, { status: 400 });
-        }
 
         const newTransaction = await prisma.transaction.create({
             data: { concept, amount, date: transactionDate, type, userId: session.user.id },

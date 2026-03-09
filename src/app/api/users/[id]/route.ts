@@ -3,7 +3,73 @@ import prisma from "@/lib/prisma";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { hasPermission, Role } from "@/lib/rbac";
+import { UpdateUserSchema } from "@/lib/schemas";
 
+/**
+ * @openapi
+ * /api/users/{id}:
+ *   patch:
+ *     tags: [Users]
+ *     summary: Update a user
+ *     description: Updates a user's name and role. Requires ADMIN role.
+ *     operationId: updateUser
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: CUID of the user to update.
+ *         schema:
+ *           type: string
+ *           example: clxyz5678efgh
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, role]
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: John Smith Jr.
+ *               role:
+ *                 type: string
+ *                 enum: [ADMIN, USER]
+ *                 example: ADMIN
+ *     responses:
+ *       200:
+ *         description: Updated user.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Missing or invalid fields.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/FieldError'
+ *       401:
+ *         description: Not authenticated.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Authenticated but not an ADMIN.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/FieldError'
+ */
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
     const session = await auth.api.getSession({ headers: await headers() });
 
@@ -16,20 +82,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
 
     const { id } = await params;
-    const body = await req.json();
 
-    const { name, role } = body;
-    if (!name || !role || !["ADMIN", "USER"].includes(role)) {
-        return NextResponse.json({ error: "Invalid fields" }, { status: 400 });
+    // Validate and parse the request body with Zod.
+    const result = UpdateUserSchema.safeParse(await req.json());
+    if (!result.success) {
+        const message = result.error.issues[0]?.message ?? "Invalid fields";
+        return NextResponse.json({ error: message }, { status: 400 });
     }
+
+    const { name, role } = result.data;
 
     try {
         const updatedUser = await prisma.user.update({
-            where: { id: id },
-            data: {
-                name,
-                role,
-            },
+            where: { id },
+            data: { name, role },
+            // Only return safe fields — never expose internal auth fields.
             select: { id: true, name: true, email: true, phone: true, role: true },
         });
         return NextResponse.json(updatedUser);

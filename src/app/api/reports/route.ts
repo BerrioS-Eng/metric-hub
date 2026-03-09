@@ -4,8 +4,58 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { hasPermission, Role } from "@/lib/rbac";
 
+/**
+ * @openapi
+ * /api/reports:
+ *   get:
+ *     tags: [Reports]
+ *     summary: Get financial report
+ *     description: >
+ *       Returns aggregated financial data for the given time window.
+ *       Requires ADMIN role. The `days` parameter defaults to 30 and is capped at 365.
+ *     operationId: getReport
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - name: days
+ *         in: query
+ *         required: false
+ *         description: Number of days to look back from today. Capped at 365.
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 365
+ *           default: 30
+ *           example: 90
+ *     responses:
+ *       200:
+ *         description: Financial report.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Report'
+ *       401:
+ *         description: Not authenticated.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Authenticated but not an ADMIN.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
+    // Cap the window at 365 days to prevent unbounded queries.
     const days = Math.min(Number(searchParams.get("days") ?? 30), 365);
     const since = new Date();
     since.setDate(since.getDate() - days);
@@ -21,6 +71,7 @@ export async function GET(req: Request) {
 
     const isAdmin = session.user.role === "ADMIN";
     const dateFilter = { gte: since };
+    // ADMINs see all transactions; USERs are scoped to their own.
     const where = isAdmin ? { date: dateFilter } : { userId: session.user.id, date: dateFilter };
 
     try {
@@ -34,9 +85,10 @@ export async function GET(req: Request) {
         const expenses = transactions.filter(t => t.type === "expense");
 
         const totalIncome = incomes.reduce((sum, t) => sum + Number(t.amount), 0);
+        // Use Math.abs because expense amounts are stored as positive values in the DB.
         const totalExpense = expenses.reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
 
-        // Grouped by month for trends
+        // Aggregate income and expense by calendar month (key: "YYYY-MM").
         const byMonth = transactions.reduce((acc, t) => {
             const month = t.date.toISOString().slice(0, 7);
             if (!acc[month]) acc[month] = { month, income: 0, expense: 0 };
@@ -45,6 +97,7 @@ export async function GET(req: Request) {
             return acc;
         }, {} as Record<string, { month: string; income: number; expense: number }>);
 
+        // Aggregate income and expense by calendar day (key: "YYYY-MM-DD").
         const byDay = transactions.reduce((acc, t) => {
             const date = t.date.toISOString().slice(0, 10); // "2026-03-01"
             if (!acc[date]) acc[date] = { date, income: 0, expense: 0 };
@@ -73,7 +126,9 @@ export async function GET(req: Request) {
                 incomeCount: incomes.length,
                 expenseCount: expenses.length,
             },
+            // Monthly trends returned in insertion order (already sorted asc by the query).
             trends: Object.values(byMonth),
+            // Daily trends explicitly sorted ascending so the chart renders left-to-right.
             dailyTrends: Object.values(byDay).sort((a, b) => a.date.localeCompare(b.date)),
             topConcepts,
         });
