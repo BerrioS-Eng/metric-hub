@@ -101,7 +101,7 @@ export default function IncomeExpenseManagement() {
                                                         {formatCurrency(transaction.amount)}
                                                     </span>
                                                 </TableCell>
-                                                <TableCell>{transaction.date}</TableCell>
+                                                <TableCell>{new Date(transaction.date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</TableCell>
                                                 <TableCell>{transaction.user.name}</TableCell>
                                             </TableRow>
                                         ))
