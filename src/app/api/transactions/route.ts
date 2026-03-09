@@ -3,7 +3,9 @@ import prisma from "@/lib/prisma";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(req: Request) {
+    const { searchParams } = new URL(req.url);
+    const daysParam = searchParams.get("days");
     const session = await auth.api.getSession({ headers: await headers() });
 
     if (!session?.user) {
@@ -12,9 +14,17 @@ export async function GET() {
 
     const isAdmin = session.user.role === "ADMIN";
 
+    const dateFilter = daysParam
+        ? { gte: new Date(Date.now() - Number(daysParam) * 86400_000) }
+        : undefined;
+
+    const where = isAdmin
+        ? (dateFilter ? { date: dateFilter } : {})
+        : { userId: session.user.id, ...(dateFilter ? { date: dateFilter } : {}) };
+    
     try {
         const transactions = await prisma.transaction.findMany({
-            where: isAdmin ? {} : { userId: session.user.id },
+            where,
             select: {
                 id: true,
                 concept: true,
