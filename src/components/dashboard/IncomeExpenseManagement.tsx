@@ -6,6 +6,7 @@ import { useSession } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { FaPlusCircle } from "react-icons/fa";
 import NewTransaction from "./NewTransaction";
+import { formatCurrency } from "@/lib/format";
 
 interface TransactionWithUser {
     id: string;
@@ -40,13 +41,6 @@ export default function IncomeExpenseManagement() {
             .finally(() => {
                 setLoading(false);
             });
-    }
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "USD",
-        }).format(Math.abs(amount));
     };
 
     return (

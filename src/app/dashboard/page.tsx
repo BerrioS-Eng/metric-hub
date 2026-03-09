@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "@/lib/auth-client";
 import UserManagement from "@/components/dashboard/UserManagement";
 import IncomeExpenseManagement from "@/components/dashboard/IncomeExpenseManagement";
+import Reports from "@/components/dashboard/reports/Reports";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("income-expense");
@@ -63,7 +64,7 @@ export default function Dashboard() {
               </TabsContent>
 
               <TabsContent value="reports" className="mt-6">
-                <p>Reports Content</p>
+                <Reports />
               </TabsContent>
             </Tabs>
           </CardContent>

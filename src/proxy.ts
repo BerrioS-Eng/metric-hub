@@ -16,7 +16,7 @@ export function proxy(request: NextRequest) {
     
     const sessionCookie =
         request.cookies.get("better-auth.session_token") ||
-        request.cookies.get("__Secure-better-auth.session_token"); // en producción con HTTPS
+        request.cookies.get("__Secure-better-auth.session_token");
 
     
     if (!sessionCookie) {

@@ -27,7 +27,7 @@ export default function NewTransaction({ open, setOpen, onTransactionAdded }: Ne
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    amount: parseFloat(formData.amount),
+                    amount: Math.abs(parseFloat(formData.amount)),
                     concept: formData.description,
                     date: formData.date,
                     type: parseFloat(formData.amount) >= 0 ? "income" : "expense",
@@ -39,7 +39,7 @@ export default function NewTransaction({ open, setOpen, onTransactionAdded }: Ne
                 setFormData({ amount: "", description: "", date: "" });
                 onTransactionAdded();
             } else {
-                console.error("Failed to save transaction");
+                console.error("Failed to save transaction:", response);
             }
         } catch (error) {
             console.error("Error saving transaction:", error);
