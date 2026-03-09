@@ -34,7 +34,7 @@ Financial management dashboard for tracking income and expenses, visualizing tre
 ### 1. Clone and install dependencies
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/BerrioS-Eng/metric-hub.git
 cd metric-hub
 npm install
 ```
