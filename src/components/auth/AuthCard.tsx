@@ -27,7 +27,7 @@ export function AuthCard({ onTransition }: AuthCardProps) {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        onTransition();
+        setError(null);
         const formData = new FormData(e.currentTarget);
 
         if (activeTab === "login") {
@@ -92,10 +92,10 @@ export function AuthCard({ onTransition }: AuthCardProps) {
                     </TabsList>
 
                     <TabsContent value="login">
-                        <LoginForm onSubmit={handleSubmit} />
+                        <LoginForm onSubmit={handleSubmit} error={error} />
                     </TabsContent>
                     <TabsContent value="register">
-                        <RegisterForm onSubmit={handleSubmit} />
+                        <RegisterForm onSubmit={handleSubmit} error={error} />
                     </TabsContent>
                 </Tabs>
 

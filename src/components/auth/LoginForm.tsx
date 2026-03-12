@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input";
 
 interface LoginFormProps {
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void | Promise<void>;
+  error?: string | null;
 }
 
-export function LoginForm({ onSubmit }: LoginFormProps) {
+export function LoginForm({ onSubmit, error }: LoginFormProps) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
@@ -31,6 +32,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
           required
         />
       </div>
+      {error && <p className="text-red-500 text-sm text-center">{error}</p>}
       <Button type="submit" className="w-full bg-gradient-to-r from-purple-500 to-pink-500 ...">
         Acceder
       </Button>

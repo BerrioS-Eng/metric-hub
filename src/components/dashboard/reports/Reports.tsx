@@ -11,6 +11,7 @@ import { LuBadgeDollarSign, LuTrendingDown, LuTrendingUp } from "react-icons/lu"
 import IncomeExpenseBar from "./IncomeExpenseBar";
 import TransactionTrends from "./TransactionTrends";
 import { TopConceptsChart } from "./TopConceptsChart";
+import { Spinner } from "@/components/ui/spinner";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -29,7 +30,6 @@ export default function Reports() {
         refreshInterval: 60000,
     });
 
-    if (isLoading) return <div>Loading...</div>;
     if (error) return <div>Error loading report data</div>;
 
     /**
@@ -89,7 +89,7 @@ export default function Reports() {
                                     value={daysBack.toString()}
                                     onValueChange={(value) => setDaysBack(Number(value))}
                                 >
-                                    <SelectTrigger className="w-[180px]">
+                                    <SelectTrigger className="w-45">
                                         <SelectValue placeholder="Select period" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -108,18 +108,24 @@ export default function Reports() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    {/* KPI cards: balance, income, expense for the selected period */}
-                    <div className="grid gap-4 md:grid-cols-3 mb-8">
-                        <SummaryCards header="Current Balance" summary={data.summary.currentBalance} footer={`${data.summary.transactionCount} transactions`} icon={<LuBadgeDollarSign className="h-6 w-6 text-green-600" />} valueColorClass="text-green-600" />
-                        <SummaryCards header="Total Income" summary={data.summary.totalIncome} footer={`${data.summary.incomeCount} transactions`} icon={<LuTrendingUp className="h-6 w-6 text-green-600" />} valueColorClass="text-green-600" />
-                        <SummaryCards header="Total Expense" summary={data.summary.totalExpense} footer={`${data.summary.expenseCount} transactions`} icon={<LuTrendingDown className="h-6 w-6 text-red-600" />} valueColorClass="text-red-600" />
-                    </div>
-                    {/* Charts: monthly bar, daily line, top expense concepts donut */}
-                    <div>
-                        <IncomeExpenseBar data={data.trends} />
-                        <TransactionTrends data={data?.dailyTrends ?? []} />
-                        <TopConceptsChart topConcepts={data.topConcepts} />
-                    </div>
+                    {isLoading ? (
+                        <Spinner className="size-6 mx-auto" />
+                    ) : (
+                        <div>
+                            {/* KPI cards: balance, income, expense for the selected period */}
+                            <div className="grid gap-4 md:grid-cols-3 mb-8">
+                                <SummaryCards header="Current Balance" summary={data.summary.currentBalance} footer={`${data.summary.transactionCount} transactions`} icon={<LuBadgeDollarSign className="h-6 w-6 text-green-600" />} valueColorClass="text-green-600" />
+                                <SummaryCards header="Total Income" summary={data.summary.totalIncome} footer={`${data.summary.incomeCount} transactions`} icon={<LuTrendingUp className="h-6 w-6 text-green-600" />} valueColorClass="text-green-600" />
+                                <SummaryCards header="Total Expense" summary={data.summary.totalExpense} footer={`${data.summary.expenseCount} transactions`} icon={<LuTrendingDown className="h-6 w-6 text-red-600" />} valueColorClass="text-red-600" />
+                            </div>
+                            {/* Charts: monthly bar, daily line, top expense concepts donut */}
+                            <div>
+                                <IncomeExpenseBar data={data.trends} />
+                                <TransactionTrends data={data?.dailyTrends ?? []} />
+                                <TopConceptsChart topConcepts={data.topConcepts} />
+                            </div>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>
