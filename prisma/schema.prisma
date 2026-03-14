@@ -41,13 +41,14 @@ enum Enum_TypeTransaction {
 }
 
 model Transaction {
-  id      String               @id @default(cuid())
-  concept String
-  amount  Decimal
-  date    DateTime
-  type    Enum_TypeTransaction
-  user    User                 @relation(fields: [userId], references: [id])
-  userId  String
+  id        String               @id @default(cuid())
+  concept   String
+  amount    Decimal
+  date      DateTime
+  type      Enum_TypeTransaction
+  user      User                 @relation(fields: [userId], references: [id])
+  userId    String
+  deletedAt DateTime?
 }
 
 model Session {

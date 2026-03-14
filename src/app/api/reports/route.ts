@@ -72,7 +72,9 @@ export async function GET(req: Request) {
     const isAdmin = session.user.role === "ADMIN";
     const dateFilter = { gte: since };
     // ADMINs see all transactions; USERs are scoped to their own.
-    const where = isAdmin ? { date: dateFilter } : { userId: session.user.id, date: dateFilter };
+    const where = isAdmin
+        ? { date: dateFilter, deletedAt: null }
+        : { userId: session.user.id, date: dateFilter, deletedAt: null };
 
     try {
         const transactions = await prisma.transaction.findMany({

@@ -54,6 +54,7 @@ export function AuthCard({ onTransition }: AuthCardProps) {
         }
 
         onTransition();
+        await new Promise((resolve) => setTimeout(resolve, 1800));
         router.push("/dashboard");
     };
 

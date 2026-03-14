@@ -56,18 +56,16 @@ export async function GET(req: Request) {
         return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const isAdmin = session.user.role === "ADMIN";
-
     // Build an optional date filter: transactions on or after N days ago.
     const dateFilter = daysParam
         ? { gte: new Date(Date.now() - Number(daysParam) * 86400_000) }
         : undefined;
 
-    // ADMINs query all transactions (optionally filtered by date).
-    // USERs are always scoped to their own userId.
-    const where = isAdmin
-        ? (dateFilter ? { date: dateFilter } : {})
-        : { userId: session.user.id, ...(dateFilter ? { date: dateFilter } : {}) };
+    // Exclude soft-deleted transactions, optionally filtered by date.
+    const where = {
+        deletedAt: null,
+        ...(dateFilter ? { date: dateFilter } : {})
+    }
 
     try {
         const transactions = await prisma.transaction.findMany({

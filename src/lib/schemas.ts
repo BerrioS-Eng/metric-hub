@@ -14,6 +14,8 @@ export const NewTransactionSchema = z.object({
     type: z.enum(["income", "expense"]),
 });
 
+export const UpdateTransactionSchema = NewTransactionSchema; 
+
 export const UpdateUserSchema = z.object({
     name: z.string().min(1),
     role: z.enum(["ADMIN", "USER"]),
@@ -113,6 +115,27 @@ export const UpdateUserSchema = z.object({
  *           type: number
  *           minimum: 0.01
  *           example: 85.50
+ *         date:
+ *           type: string
+ *           format: date
+ *           description: ISO 8601 date — must not be in the future.
+ *           example: "2026-03-05"
+ *         type:
+ *           type: string
+ *           enum: [income, expense]
+ *           example: expense
+ *
+ *     UpdateTransaction:
+ *       type: object
+ *       required: [concept, amount, date, type]
+ *       properties:
+ *         concept:
+ *           type: string
+ *           example: Updated grocery shopping
+ *         amount:
+ *           type: number
+ *           minimum: 0.01
+ *           example: 90.00
  *         date:
  *           type: string
  *           format: date

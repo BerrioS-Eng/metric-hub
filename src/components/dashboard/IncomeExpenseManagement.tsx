@@ -4,10 +4,14 @@ import { Spinner } from "@/components/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useSession } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
-import { FaPlusCircle } from "react-icons/fa";
+import { FaPlusCircle, FaTrash } from "react-icons/fa";
+import { LuPencilLine } from "react-icons/lu";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import NewTransaction from "./NewTransaction";
+import { EditTransactionDialog } from "./EditTransactionDialog";
 import { formatCurrency } from "@/lib/format";
 
+/** Shape of a transaction as returned by the GET /api/transactions endpoint. */
 interface TransactionWithUser {
     id: string;
     concept: string;
@@ -19,16 +23,22 @@ interface TransactionWithUser {
     };
 };
 
+/** Displays the transactions table with CRUD actions. Admin users get an extra Actions column for editing and soft-deleting transactions. */
 export default function IncomeExpenseManagement() {
     const [transactions, setTransactions] = useState<TransactionWithUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [open, setOpen] = useState(false);
+    const [editingTransaction, setEditingTransaction] = useState<TransactionWithUser | null>(null);
+    const [deletingTransaction, setDeletingTransaction] = useState<TransactionWithUser | null>(null);
     const { data: session } = useSession();
+
+    const isAdmin = session?.user.role === "ADMIN";
 
     useEffect(() => {
         fetchTransactions();
     }, []);
 
+    /** Fetches all active transactions from the API and updates local state. */
     const fetchTransactions = async () => {
         fetch("/api/transactions")
             .then((res) => res.json())
@@ -43,6 +53,38 @@ export default function IncomeExpenseManagement() {
             });
     };
 
+    /** Sends a PATCH request to update a transaction and refreshes the list on success. */
+    const handleUpdateTransaction = async (id: string, data: { concept: string; amount: number; date: string; type: string }) => {
+        try {
+            const response = await fetch(`/api/transactions/${id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            });
+            if (response.ok) {
+                fetchTransactions();
+                setEditingTransaction(null);
+            }
+        } catch (error) {
+            console.error("Error updating transaction:", error);
+        }
+    };
+
+    /** Sends a DELETE request to soft-delete a transaction and refreshes the list on success. */
+    const handleDeleteTransaction = async (id: string) => {
+        try {
+            const response = await fetch(`/api/transactions/${id}`, {
+                method: "DELETE",
+            });
+            if (response.ok) {
+                fetchTransactions();
+                setDeletingTransaction(null);
+            }
+        } catch (error) {
+            console.error("Error deleting transaction:", error);
+        }
+    };
+
     return (
         <Card>
             <CardHeader>
@@ -53,7 +95,7 @@ export default function IncomeExpenseManagement() {
                             View and manage all financial transactions
                         </CardDescription>
                     </div>
-                    {session?.user.role === "ADMIN" && (
+                    {isAdmin && (
                         <Button onClick={() => setOpen(true)}>
                             <FaPlusCircle className="h-4 w-4 mr-2" />
                             New Transaction
@@ -73,12 +115,13 @@ export default function IncomeExpenseManagement() {
                                     <TableHead>Amount</TableHead>
                                     <TableHead>Date</TableHead>
                                     <TableHead>User</TableHead>
+                                    {isAdmin && <TableHead className="text-right">Actions</TableHead>}
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {transactions.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="text-center text-gray-500">
+                                        <TableCell colSpan={isAdmin ? 5 : 4} className="text-center text-gray-500">
                                             No transactions found
                                         </TableCell>
                                     </TableRow>
@@ -103,6 +146,27 @@ export default function IncomeExpenseManagement() {
                                                 </TableCell>
                                                 <TableCell>{new Date(transaction.date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</TableCell>
                                                 <TableCell>{transaction.user.name}</TableCell>
+                                                {isAdmin && (
+                                                    <TableCell className="text-right">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => setEditingTransaction(transaction)}
+                                                        >
+                                                            <LuPencilLine className="h-4 w-4 mr-2" />
+                                                            Edit
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-red-600 hover:text-red-700"
+                                                            onClick={() => setDeletingTransaction(transaction)}
+                                                        >
+                                                            <FaTrash className="h-4 w-4 mr-2" />
+                                                            Delete
+                                                        </Button>
+                                                    </TableCell>
+                                                )}
                                             </TableRow>
                                         ))
                                 )}
@@ -111,6 +175,33 @@ export default function IncomeExpenseManagement() {
                     </div>
                 )}
                 <NewTransaction open={open} setOpen={setOpen} onTransactionAdded={fetchTransactions} />
+                {editingTransaction && (
+                    <EditTransactionDialog
+                        transaction={editingTransaction}
+                        open={!!editingTransaction}
+                        onOpenChange={(open) => { if (!open) setEditingTransaction(null); }}
+                        onSave={handleUpdateTransaction}
+                    />
+                )}
+                <Dialog open={!!deletingTransaction} onOpenChange={(open) => { if (!open) setDeletingTransaction(null); }}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Confirm Deletion</DialogTitle>
+                            <DialogDescription>
+                                Are you sure you want to delete the transaction &quot;{deletingTransaction?.concept}&quot;?
+                                This action can be undone by an administrator.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setDeletingTransaction(null)}>
+                                Cancel
+                            </Button>
+                            <Button variant="destructive" onClick={() => deletingTransaction && handleDeleteTransaction(deletingTransaction.id)}>
+                                Delete
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </CardContent>
         </Card>
     )
