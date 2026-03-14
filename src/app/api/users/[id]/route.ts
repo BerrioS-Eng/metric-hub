@@ -90,12 +90,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         return NextResponse.json({ error: message }, { status: 400 });
     }
 
-    const { name, role } = result.data;
+    const { name, phone, role } = result.data;
 
     try {
         const updatedUser = await prisma.user.update({
             where: { id },
-            data: { name, role },
+            data: { name, phone, role },
             // Only return safe fields — never expose internal auth fields.
             select: { id: true, name: true, email: true, phone: true, role: true },
         });

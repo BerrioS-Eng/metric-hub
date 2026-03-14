@@ -11,12 +11,13 @@ interface EditUserDialogProps {
     user: User;
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSave: (id: string, data: { name: string; role: "ADMIN" | "USER" }) => void;
+    onSave: (id: string, data: { name: string; role: "ADMIN" | "USER"; phone: string | null }) => void;
 }
 
 export function EditUserDialog({ user, open, onOpenChange, onSave }: EditUserDialogProps) {
     const [formData, setFormData] = useState({
         name: user.name,
+        phone: user.phone || "",
         role: user.role as "ADMIN" | "USER",
     });
 
@@ -61,15 +62,22 @@ export function EditUserDialog({ user, open, onOpenChange, onSave }: EditUserDia
                                 </SelectContent>
                             </Select>
                         </div>
+                        <div className="grip gap-2">
+                            <Label htmlFor="edit-phone">Phone</Label>
+                            <Input 
+                                id="edit-phone"
+                                type="tel"
+                                placeholder="Enter phone number"
+                                value={formData.phone}
+                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            />
+                        </div>
                         <div className="rounded-lg bg-gray-50 p-3 text-sm">
                             <p className="text-gray-600">
                                 <strong>Email:</strong> {user.email}
                             </p>
-                            <p className="text-gray-600">
-                                <strong>Phone:</strong> {user.phone || "Not Provided"}
-                            </p>
                             <p className="text-xs text-gray-500 mt-2">
-                                Email and phone cannot be changed in this form
+                                Email cannot be changed in this form
                             </p>
                         </div>
                     </div>

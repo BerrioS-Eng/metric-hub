@@ -18,6 +18,7 @@ export const UpdateTransactionSchema = NewTransactionSchema;
 
 export const UpdateUserSchema = z.object({
     name: z.string().min(1),
+    phone: z.string().nullable(),
     role: z.enum(["ADMIN", "USER"]),
 });
 

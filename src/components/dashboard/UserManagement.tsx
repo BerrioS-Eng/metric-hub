@@ -38,7 +38,7 @@ export default function UserManagement() {
      * If the edited user is the currently logged-in admin, the session
      * is refreshed so the UI reflects any role change immediately.
      */
-    const handleUpdateUser = async (id: string, data: { name: string; role: "ADMIN" | "USER" }) => {
+    const handleUpdateUser = async (id: string, data: { name: string; phone: string | null; role: "ADMIN" | "USER" }) => {
         try {
             const response = await fetch(`/api/users/${id}`, {
                 method: "PATCH",
