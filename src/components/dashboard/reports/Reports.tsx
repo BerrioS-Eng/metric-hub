@@ -114,9 +114,27 @@ export default function Reports() {
                         <div>
                             {/* KPI cards: balance, income, expense for the selected period */}
                             <div className="grid gap-4 md:grid-cols-3 mb-8">
-                                <SummaryCards header="Current Balance" summary={data.summary.currentBalance} footer={`${data.summary.transactionCount} transactions`} icon={<LuBadgeDollarSign className="h-6 w-6 text-green-600" />} valueColorClass="text-green-600" />
-                                <SummaryCards header="Total Income" summary={data.summary.totalIncome} footer={`${data.summary.incomeCount} transactions`} icon={<LuTrendingUp className="h-6 w-6 text-green-600" />} valueColorClass="text-green-600" />
-                                <SummaryCards header="Total Expense" summary={data.summary.totalExpense} footer={`${data.summary.expenseCount} transactions`} icon={<LuTrendingDown className="h-6 w-6 text-red-600" />} valueColorClass="text-red-600" />
+                                <SummaryCards 
+                                    header="Current Balance" 
+                                    summary={data.summary.currentBalance} 
+                                    footer={`${data.summary.transactionCount} transactions`} 
+                                    icon={<LuBadgeDollarSign className="h-6 w-6 text-green-600" />} 
+                                    valueColorClass={data.summary.currentBalance >= 0 ? "text-green-600" : "text-red-600"} 
+                                />
+                                <SummaryCards 
+                                    header="Total Income" 
+                                    summary={data.summary.totalIncome} 
+                                    footer={`${data.summary.incomeCount} transactions`} 
+                                    icon={<LuTrendingUp className="h-6 w-6 text-green-600" />}
+                                    valueColorClass="text-green-600" 
+                                />
+                                <SummaryCards 
+                                    header="Total Expense" 
+                                    summary={data.summary.totalExpense} 
+                                    footer={`${data.summary.expenseCount} transactions`} 
+                                    icon={<LuTrendingDown className="h-6 w-6 text-red-600" />} 
+                                    valueColorClass="text-red-600" 
+                                />
                             </div>
                             {/* Charts: monthly bar, daily line, top expense concepts donut */}
                             <div>

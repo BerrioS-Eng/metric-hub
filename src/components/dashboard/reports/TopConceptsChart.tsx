@@ -78,7 +78,7 @@ export function TopConceptsChart({ topConcepts }: TopConceptsChartProps) {
                 <div className="flex flex-col sm:flex-row items-center gap-6">
 
                     {/* Donut chart */}
-                    <div className="w-full sm:w-1/2 h-[220px]">
+                    <div className="w-full sm:w-1/2 h-55">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
@@ -119,7 +119,7 @@ export function TopConceptsChart({ topConcepts }: TopConceptsChartProps) {
                                                 className="inline-block h-2 w-2 rounded-full shrink-0"
                                                 style={{ backgroundColor: COLORS[index % COLORS.length] }}
                                             />
-                                            <span className="text-sm font-medium truncate max-w-[120px] group-hover:text-foreground text-muted-foreground transition-colors">
+                                            <span className="text-sm font-medium truncate max-w-30 group-hover:text-foreground text-muted-foreground transition-colors">
                                                 {item.concept}
                                             </span>
                                         </div>
